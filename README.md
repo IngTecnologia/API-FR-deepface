@@ -3,8 +3,8 @@
 ![Python](https://img.shields.io/badge/Python-3.10%2B-blue?logo=python)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.95+-green?logo=fastapi)
 ![DeepFace](https://img.shields.io/badge/DeepFace-Enabled-lightgrey?logo=deep-learning)
-![License](https://img.shields.io/badge/License-MIT-blue.svg)
 ![Docker](https://img.shields.io/badge/Docker-Supported-blue?logo=docker)
+![Licencia](https://img.shields.io/badge/Licencia-INEMEC-red)
 
 Esta API proporciona un sistema de verificación biométrica facial para control de asistencia, desarrollado con **FastAPI** y **DeepFace**.
 
@@ -192,7 +192,8 @@ Por favor abre un *issue* o envía un *pull request* para mejorar este proyecto.
 
 ## 📄 Licencia
 
-Este proyecto está licenciado bajo la licencia MIT. Consulta el archivo [LICENSE](LICENSE) para más detalles.
+Este proyecto es propiedad de **INEMEC**.  
+**Todos los derechos reservados.**
 
 ---
 
@@ -201,4 +202,7 @@ Este proyecto está licenciado bajo la licencia MIT. Consulta el archivo [LICENS
 Desarrollado por **Ing. Jesús Cotes**
 
 [![GitHub](https://img.shields.io/badge/GitHub-@IngTecnologia-black?logo=github)](https://github.com/IngTecnologia)
+
+
+
 
