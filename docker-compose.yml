@@ -1,0 +1,11 @@
+
+services:
+  face-api:
+    build: .
+    container_name: deepface_api
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./imagenes_base:/appfdo/imagenes_base
+      - ./tmp_uploads:/app/tmp_uploads
+      - ./ubicaciones.json:/app/ubicaciones.json
