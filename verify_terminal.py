@@ -5,11 +5,13 @@ import shutil
 import os
 import json
 import uuid
+from typing import Optional
 from attendance_records import save_record
 from config import (
-    API_KEYS, BASE_IMAGE_PATH, TMP_UPLOAD_PATH, USERS_FILE,
+    API_KEYS, BASE_IMAGE_PATH, TMP_UPLOAD_PATH, USERS_FILE, UBICACIONES_FILE,
     FACE_MODEL, DETECTOR_BACKEND, DISTANCE_METRIC, ANTI_SPOOFING
 )
+from location import verificar_ubicacion, calcular_distancia_m
 
 router = APIRouter()
 
@@ -23,6 +25,8 @@ async def verify_terminal(
     terminal_id: str = Form(...),
     tipo_registro: str = Form(...),
     image: UploadFile = Form(...),
+    lat: Optional[float] = Form(None),  # Opcional para terminales fijas
+    lng: Optional[float] = Form(None),  # Opcional para terminales fijas
     x_api_key: str = Header(None)
 ):
     # Validar tipo_registro
@@ -102,6 +106,51 @@ async def verify_terminal(
         
         print("Verificación DeepFace completada con éxito")
         
+        # Variables para información de ubicación
+        fuera_de_ubicacion = False
+        ubicacion_nombre = "Terminal"
+        distancia = 0
+        
+        # Si tenemos datos de ubicación, verificamos según el perfil
+        if lat is not None and lng is not None:
+            # Cargar perfil de ubicación del usuario
+            if os.path.exists(USERS_FILE):
+                with open(USERS_FILE, "r") as f:
+                    usuarios = json.load(f)
+                    usuario = next((u for u in usuarios if u["cedula"] == cedula), None)
+                    
+                perfil_ubicacion = usuario.get("perfil_ubicacion", "fijo") if usuario else "fijo"
+                
+                # Cargar ubicaciones del usuario
+                if os.path.exists(UBICACIONES_FILE):
+                    with open(UBICACIONES_FILE, "r") as f:
+                        ubicaciones = json.load(f)
+                        usuario_ubicacion = next((u for u in ubicaciones if u["cedula"] == cedula), None)
+                    
+                    if usuario_ubicacion:
+                        # Verificar ubicación con la función actualizada
+                        if "ubicaciones" in usuario_ubicacion:
+                            en_ubicacion, distancia, ubicacion_actual = verificar_ubicacion(
+                                lat, lng, usuario_ubicacion["ubicaciones"]
+                            )
+                            ubicacion_nombre = ubicacion_actual
+                        else:
+                            # Formato antiguo
+                            distancia = calcular_distancia_m(
+                                lat, lng, usuario_ubicacion["lat"], usuario_ubicacion["lng"]
+                            )
+                            en_ubicacion = distancia <= usuario_ubicacion.get("radio_metros", 200)
+                            ubicacion_nombre = "Principal"
+                        
+                        fuera_de_ubicacion = not en_ubicacion
+                        
+                        # Si es perfil "fijo" y está fuera de ubicación, rechazar
+                        if perfil_ubicacion == "fijo" and fuera_de_ubicacion:
+                            raise HTTPException(
+                                status_code=403, 
+                                detail=f"Estás fuera del rango permitido ({int(distancia)} m)"
+                            )
+        
         # Obtener empresa del usuario
         empresa = "principal"  # Valor por defecto
         
@@ -129,7 +178,11 @@ async def verify_terminal(
             "distancia": result["distance"],
             "terminal_id": terminal_id,
             "web": False,
-            "empresa": empresa
+            "empresa": empresa,
+            "fuera_de_ubicacion": fuera_de_ubicacion,
+            "comentario": "Registro desde terminal física",  # Comentario predeterminado
+            "ubicacion_nombre": ubicacion_nombre,
+            "distancia_ubicacion": int(distancia) if lat is not None else 0
         }
         
         # Guardar registro
@@ -147,7 +200,10 @@ async def verify_terminal(
             "distance": result["distance"],
             "cedula": cedula,
             "tipo_registro": tipo_registro,
-            "timestamp": timestamp
+            "timestamp": timestamp,
+            "fuera_de_ubicacion": fuera_de_ubicacion,
+            "ubicacion": ubicacion_nombre,
+            "distancia_ubicacion": int(distancia) if lat is not None else 0
         }
         
         # Limpiar archivo temporal después de procesar

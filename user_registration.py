@@ -42,12 +42,18 @@ async def register_user(
     empresa: str = Form(...),
     email: str = Form(None),
     telefono: str = Form(None),
+    perfil_ubicacion: str = Form("fijo"),  # por defecto es fijo
     terminal_id: str = Form(...),
     imagen: UploadFile = Form(...),
     lat: float = Form(...),
     lng: float = Form(...),
-    radio_metros: int = Form(200)  # Radio predeterminado
+    radio_metros: int = Form(200),  # Radio predeterminado
+    ubicacion_nombre: str = Form("Principal")  # Nombre descriptivo de la ubicación
 ):
+    # Validar perfil_ubicacion
+    if perfil_ubicacion not in ["libre", "movil", "fijo"]:
+        raise HTTPException(status_code=400, detail="Perfil de ubicación debe ser 'libre', 'movil' o 'fijo'")
+    
     # Verificar si la cédula ya existe
     if os.path.exists(USERS_FILE):
         with open(USERS_FILE, "r") as f:
@@ -69,6 +75,7 @@ async def register_user(
         "empresa": empresa,
         "email": email,
         "telefono": telefono,
+        "perfil_ubicacion": perfil_ubicacion,
         "fecha_registro": datetime.utcnow().isoformat()
     }
     
@@ -85,15 +92,42 @@ async def register_user(
     else:
         ubicaciones = []
     
+    # Buscar si el usuario ya tiene ubicaciones registradas
+    usuario_existente = next((i for i, u in enumerate(ubicaciones) if u["cedula"] == cedula), None)
+    
     nueva_ubicacion = {
-        "cedula": cedula,
         "lat": lat,
         "lng": lng,
         "radio_metros": radio_metros,
-        "nombre": nombre
+        "nombre": ubicacion_nombre
     }
     
-    ubicaciones.append(nueva_ubicacion)
+    if usuario_existente is not None:
+        # Si ya existe, agregar la ubicación a la lista de ubicaciones
+        if "ubicaciones" in ubicaciones[usuario_existente]:
+            ubicaciones[usuario_existente]["ubicaciones"].append(nueva_ubicacion)
+        else:
+            # Migrar formato antiguo a nuevo formato
+            ubicaciones[usuario_existente] = {
+                "cedula": cedula,
+                "nombre_usuario": nombre,
+                "ubicaciones": [
+                    {
+                        "lat": ubicaciones[usuario_existente].get("lat", lat),
+                        "lng": ubicaciones[usuario_existente].get("lng", lng),
+                        "radio_metros": ubicaciones[usuario_existente].get("radio_metros", radio_metros),
+                        "nombre": "Principal"
+                    },
+                    nueva_ubicacion
+                ]
+            }
+    else:
+        # Si no existe, crear nueva entrada
+        ubicaciones.append({
+            "cedula": cedula,
+            "nombre_usuario": nombre,
+            "ubicaciones": [nueva_ubicacion]
+        })
     
     with open(UBICACIONES_FILE, "w", encoding="utf-8") as f:
         json.dump(ubicaciones, f, indent=2, ensure_ascii=False)
@@ -123,7 +157,8 @@ async def register_user(
         "success": True,
         "message": "Usuario registrado correctamente. Solicitud enviada a la terminal.",
         "user_id": cedula,
-        "request_id": nueva_solicitud["id"]
+        "request_id": nueva_solicitud["id"],
+        "perfil_ubicacion": perfil_ubicacion
     }
 
 # Endpoint para que la terminal obtenga las solicitudes pendientes
@@ -175,3 +210,195 @@ async def update_terminal_request(
         "success": True,
         "message": f"Solicitud {estado} correctamente"
     }
+
+#Endpoint para añadir ubicaciones de usuario 
+@router.post("/user-locations/{cedula}")
+async def add_user_location(
+    cedula: str,
+    lat: float = Form(...),
+    lng: float = Form(...),
+    radio_metros: int = Form(200),
+    nombre: str = Form(...)
+):
+    """Añade una nueva ubicación para un usuario."""
+    if not os.path.exists(UBICACIONES_FILE):
+        raise HTTPException(status_code=404, detail="Archivo de ubicaciones no encontrado")
+    
+    with open(UBICACIONES_FILE, "r") as f:
+        ubicaciones = json.load(f)
+    
+    # Buscar usuario
+    usuario_idx = next((i for i, u in enumerate(ubicaciones) if u["cedula"] == cedula), None)
+    
+    if usuario_idx is None:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    
+    nueva_ubicacion = {
+        "lat": lat,
+        "lng": lng,
+        "radio_metros": radio_metros,
+        "nombre": nombre
+    }
+    
+    # Verificar si tiene el nuevo formato
+    if "ubicaciones" in ubicaciones[usuario_idx]:
+        ubicaciones[usuario_idx]["ubicaciones"].append(nueva_ubicacion)
+    else:
+        # Migrar a nuevo formato
+        nombre_usuario = ubicaciones[usuario_idx].get("nombre", "Usuario")
+        ubicaciones[usuario_idx] = {
+            "cedula": cedula,
+            "nombre_usuario": nombre_usuario,
+            "ubicaciones": [
+                {
+                    "lat": ubicaciones[usuario_idx].get("lat", 0),
+                    "lng": ubicaciones[usuario_idx].get("lng", 0),
+                    "radio_metros": ubicaciones[usuario_idx].get("radio_metros", 200),
+                    "nombre": "Principal"
+                },
+                nueva_ubicacion
+            ]
+        }
+    
+    with open(UBICACIONES_FILE, "w", encoding="utf-8") as f:
+        json.dump(ubicaciones, f, indent=2, ensure_ascii=False)
+    
+    return {"success": True, "message": "Ubicación añadida correctamente"}
+
+#Endpoint para obtener las ubicaciones de usuario 
+@router.get("/user-locations/{cedula}")
+async def get_user_locations(cedula: str):
+    """Obtiene todas las ubicaciones de un usuario."""
+    if not os.path.exists(UBICACIONES_FILE):
+        raise HTTPException(status_code=404, detail="Archivo de ubicaciones no encontrado")
+    
+    with open(UBICACIONES_FILE, "r") as f:
+        ubicaciones = json.load(f)
+    
+    # Buscar usuario
+    usuario = next((u for u in ubicaciones if u["cedula"] == cedula), None)
+    
+    if usuario is None:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    
+    # Verificar formato y devolver las ubicaciones
+    if "ubicaciones" in usuario:
+        return {"cedula": cedula, "ubicaciones": usuario["ubicaciones"]}
+    else:
+        # Formato antiguo, devolver una sola ubicación
+        return {
+            "cedula": cedula, 
+            "ubicaciones": [{
+                "lat": usuario.get("lat", 0),
+                "lng": usuario.get("lng", 0),
+                "radio_metros": usuario.get("radio_metros", 200),
+                "nombre": "Principal"
+            }]
+        }
+
+#Endpoint para eliminar ubicaciones de usuario 
+@router.delete("/user-locations/{cedula}/{ubicacion_idx}")
+async def delete_user_location(cedula: str, ubicacion_idx: int):
+    """Elimina una ubicación específica de un usuario."""
+    if not os.path.exists(UBICACIONES_FILE):
+        raise HTTPException(status_code=404, detail="Archivo de ubicaciones no encontrado")
+    
+    with open(UBICACIONES_FILE, "r") as f:
+        ubicaciones = json.load(f)
+    
+    # Buscar usuario
+    usuario_idx = next((i for i, u in enumerate(ubicaciones) if u["cedula"] == cedula), None)
+    
+    if usuario_idx is None:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    
+    # Verificar formato
+    if "ubicaciones" in ubicaciones[usuario_idx]:
+        if ubicacion_idx < 0 or ubicacion_idx >= len(ubicaciones[usuario_idx]["ubicaciones"]):
+            raise HTTPException(status_code=400, detail="Índice de ubicación inválido")
+        
+        # No permitir eliminar la última ubicación
+        if len(ubicaciones[usuario_idx]["ubicaciones"]) <= 1:
+            raise HTTPException(status_code=400, detail="No se puede eliminar la única ubicación")
+        
+        # Eliminar ubicación
+        ubicaciones[usuario_idx]["ubicaciones"].pop(ubicacion_idx)
+        
+        with open(UBICACIONES_FILE, "w", encoding="utf-8") as f:
+            json.dump(ubicaciones, f, indent=2, ensure_ascii=False)
+        
+        return {"success": True, "message": "Ubicación eliminada correctamente"}
+    else:
+        raise HTTPException(status_code=400, detail="Usuario con formato antiguo de ubicaciones")
+    
+ #Endpoint para aactualizar perfil de ubicaciones de usuario 
+@router.put("/user-profile/{cedula}")
+async def update_user_profile(
+    cedula: str,
+    perfil_ubicacion: str = Form(...)
+):
+    """Actualiza el perfil de ubicación de un usuario."""
+    # Validar perfil_ubicacion
+    if perfil_ubicacion not in ["libre", "movil", "fijo"]:
+        raise HTTPException(status_code=400, detail="Perfil de ubicación debe ser 'libre', 'movil' o 'fijo'")
+    
+    if not os.path.exists(USERS_FILE):
+        raise HTTPException(status_code=404, detail="Archivo de usuarios no encontrado")
+    
+    with open(USERS_FILE, "r") as f:
+        usuarios = json.load(f)
+    
+    # Buscar el usuario
+    usuario_idx = next((i for i, u in enumerate(usuarios) if u["cedula"] == cedula), None)
+    
+    if usuario_idx is None:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    
+    # Actualizar perfil
+    usuarios[usuario_idx]["perfil_ubicacion"] = perfil_ubicacion
+    
+    with open(USERS_FILE, "w", encoding="utf-8") as f:
+        json.dump(usuarios, f, indent=2, ensure_ascii=False)
+    
+    return {
+        "success": True,
+        "message": f"Perfil de ubicación actualizado a '{perfil_ubicacion}'",
+        "usuario": usuarios[usuario_idx]
+    }
+
+#Endpoint apara obtener el perfil de ubicaciones de un usuario 
+@router.get("/user-profile/{cedula}")
+async def get_user_profile(cedula: str):
+    """Obtiene el perfil completo de un usuario."""
+    if not os.path.exists(USERS_FILE):
+        raise HTTPException(status_code=404, detail="Archivo de usuarios no encontrado")
+    
+    with open(USERS_FILE, "r") as f:
+        usuarios = json.load(f)
+    
+    # Buscar el usuario
+    usuario = next((u for u in usuarios if u["cedula"] == cedula), None)
+    
+    if usuario is None:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    
+    # Obtener ubicaciones
+    if os.path.exists(UBICACIONES_FILE):
+        with open(UBICACIONES_FILE, "r") as f:
+            ubicaciones = json.load(f)
+        
+        usuario_ubicacion = next((u for u in ubicaciones if u["cedula"] == cedula), None)
+        
+        if usuario_ubicacion:
+            if "ubicaciones" in usuario_ubicacion:
+                usuario["ubicaciones"] = usuario_ubicacion["ubicaciones"]
+            else:
+                # Formato antiguo
+                usuario["ubicaciones"] = [{
+                    "lat": usuario_ubicacion.get("lat", 0),
+                    "lng": usuario_ubicacion.get("lng", 0),
+                    "radio_metros": usuario_ubicacion.get("radio_metros", 200),
+                    "nombre": "Principal"
+                }]
+    
+    return usuario
