@@ -300,7 +300,7 @@ async def verify_web_face(
             "comentario": comentario,
             "ubicacion_nombre": ubicacion_nombre
         }
-        
+        """
         # Limpiar archivo temporal antes de devolver respuesta
         if tmp_path and os.path.exists(tmp_path):
             try:
@@ -308,7 +308,7 @@ async def verify_web_face(
                 print(f"Archivo temporal eliminado: {tmp_path}")
             except Exception as e:
                 print(f"No se pudo eliminar el archivo temporal: {str(e)}")
-        
+        """
         return response
         
     except Exception as e:
