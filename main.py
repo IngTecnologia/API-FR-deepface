@@ -33,3 +33,14 @@ def read_root():
         "docs": "/docs",
         "version": "1.0.0"
     }
+
+@app.get("/version")
+def get_version():
+    """Endpoint para verificar la versión actual de la aplicación."""
+    return {
+        "latest_version": "1.0.0",  # Cambiar cuando haya nuevas versiones
+        "minimum_version": "1.0.0",  # Versión mínima soportada
+        "force_update": False,  # Cambiar a True cuando se requiera actualización obligatoria
+        "update_message": "Nueva versión disponible con mejoras de seguridad.",
+        "download_url": "https://example.com/download"  # URL de descarga opcional
+    }
