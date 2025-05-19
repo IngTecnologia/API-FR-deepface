@@ -1,11 +1,31 @@
+version: '3.8'
 
 services:
   face-api:
     build: .
     container_name: deepface_api
+    restart: always
     ports:
       - "8000:8000"
     volumes:
-      - ./imagenes_base:/appfdo/imagenes_base
+      - ./imagenes_base:/app/imagenes_base
       - ./tmp_uploads:/app/tmp_uploads
+      - ./usuarios.json:/app/usuarios.json
+      - ./solicitudes_registro.json:/app/solicitudes_registro.json
       - ./ubicaciones.json:/app/ubicaciones.json
+      - ./registros.json:/app/registros.json
+
+  nginx:
+    image: nginx:alpine
+    container_name: deepface_api_nginx
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d
+      - ./nginx/ssl:/etc/nginx/ssl
+      - ./nginx/logs:/var/log/nginx
+      - ./static:/app/static
+    depends_on:
+      - face-api
