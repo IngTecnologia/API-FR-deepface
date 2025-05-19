@@ -24,6 +24,11 @@ wheels/
 # Directorios de imágenes y temporales
 imagenes_base/
 tmp_uploads/
+temp_uploads/
+
+# Archivos Docker
+*.tar
+*.tar.gz
 
 # Archivos de datos
 *.json
