@@ -451,10 +451,12 @@
                     <label for="terminal_id">Terminal *</label>
                     <select id="terminal_id" name="terminal_id" required>
                         <option value="">-- Seleccione una terminal --</option>
-                        <option value="TERMINAL_001">Terminal 001 - Entrada Principal</option>
-                        <option value="TERMINAL_002">Terminal 002 - Entrada Secundaria</option>
-                        <option value="TERMINAL_003">Terminal 003 - Área de Producción</option>
-                        <option value="TERMINAL_004">Terminal 004 - Oficinas Administrativas</option>
+                        <option value="TERMINAL_001">Terminal 001 - Oficina Yopal</option>
+                        <option value="TERMINAL_002">Terminal 002 - Oficina Tauramena</option>
+                        <option value="TERMINAL_003">Terminal 003 - Campo Cupiagua</option>
+                        <option value="TERMINAL_004">Terminal 004 - Campo Cusiana</option>
+                        <option value="TERMINAL_003">Terminal 003 - Campo Floreaña</option>
+                        <option value="TERMINAL_004">Terminal 004 - Oficina Bogotá</option>
                     </select>
                 </div>
             </div>
@@ -505,41 +507,49 @@
         API_BASE_URL: window.location.origin + '/api',
         LOCATIONS: [
             {
-                id: 'oficina_principal',
-                name: 'Oficina Principal',
-                description: 'Sede principal de la empresa',
+                id: 'oficina_yopal',
+                name: 'Oficina Yopal',
+                description: 'Sede administrativa Yopal',
                 lat: 4.6867602,
                 lng: -74.0529746,
                 radius: 200
             },
             {
-                id: 'sede_norte',
-                name: 'Sede Norte',
-                description: 'Sucursal zona norte',
+                id: 'oficina_tauramena',
+                name: 'Oficina Tauramena',
+                description: 'Sede administrativa Tauramena',
                 lat: 4.7110,
                 lng: -74.0721,
                 radius: 150
             },
             {
-                id: 'almacen',
-                name: 'Almacén Central',
-                description: 'Centro de distribución',
+                id: 'cupiagua',
+                name: 'Campo Cupiagua',
+                description: 'CPF Aguazul',
                 lat: 4.6097, 
                 lng: -74.0817,
                 radius: 100
             },
             {
-                id: 'fabrica',
-                name: 'Planta de Producción',
-                description: 'Área de manufactura',
+                id: 'cusiana',
+                name: 'Campo Cusiana',
+                description: 'CPF Tauramena',
                 lat: 4.5709,
                 lng: -74.2973,
                 radius: 300
             },
             {
-                id: 'oficina_comercial',
-                name: 'Oficina Comercial',
-                description: 'Área de ventas y atención al cliente',
+                id: 'floreña',
+                name: 'Campo Floreña',
+                description: 'CPF Yopal',
+                lat: 4.6760,
+                lng: -74.0479,
+                radius: 100
+            },
+            {
+                id: 'bogota',
+                name: 'Oficina Bogotá',
+                description: 'Sede administrativa Bogotá',
                 lat: 4.6760,
                 lng: -74.0479,
                 radius: 100
