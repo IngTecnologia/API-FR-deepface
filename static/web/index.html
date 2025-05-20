@@ -303,6 +303,73 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        .toast-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+            max-width: 350px;
+        }
+
+        .toast {
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            animation: slideIn 0.3s ease-out forwards;
+            opacity: 0;
+            display: flex;
+            align-items: center;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .toast-success {
+            background: #e8f5e9;
+            color: #4CAF50;
+            border-left: 4px solid #4CAF50;
+        }
+
+        .toast-error {
+            background: #ffebee;
+            color: #B00020;
+            border-left: 4px solid #B00020;
+        }
+
+        .toast-warning {
+            background: #fff3e0;
+            color: #FF9800;
+            border-left: 4px solid #FF9800;
+        }
+
+        .toast-icon {
+            margin-right: 10px;
+            font-size: 20px;
+        }
+
+        .toast-content {
+            flex: 1;
+        }
+
+        .toast-close {
+            cursor: pointer;
+            margin-left: 10px;
+            font-size: 18px;
+            opacity: 0.7;
+        }
+
+        .toast-close:hover {
+            opacity: 1;
+        }
     </style>
 </head>
 <body>
@@ -512,17 +579,61 @@
 
     // Función para mostrar alertas
     function showAlert(message, type) {
-        const alert = document.createElement('div');
-        alert.className = `alert alert-${type}`;
-        alert.innerHTML = message;
+        // Crear o recuperar el contenedor de notificaciones
+        let toastContainer = document.getElementById('toastContainer');
+        if (!toastContainer) {
+            toastContainer = document.createElement('div');
+            toastContainer.id = 'toastContainer';
+            toastContainer.className = 'toast-container';
+            document.body.appendChild(toastContainer);
+        }
         
-        elements.alertContainer.innerHTML = '';
-        elements.alertContainer.appendChild(alert);
+        // Crear el toast
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${type}`;
         
+        // Definir icono según el tipo
+        let icon = '🔔'; // Icono por defecto
+        if (type === 'success') icon = '✅';
+        if (type === 'error') icon = '❌';
+        if (type === 'warning') icon = '⚠️';
+        
+        // Estructura interna del toast
+        toast.innerHTML = `
+            <div class="toast-icon">${icon}</div>
+            <div class="toast-content">${message}</div>
+            <div class="toast-close">×</div>
+        `;
+        
+        // Añadir al contenedor
+        toastContainer.appendChild(toast);
+        
+        // Aplicar animación (pequeño delay para que funcione correctamente)
         setTimeout(() => {
-            if (alert.parentNode) {
-                alert.remove();
-            }
+            toast.style.opacity = '1';
+        }, 10);
+        
+        // Configurar botón de cerrar
+        const closeButton = toast.querySelector('.toast-close');
+        closeButton.addEventListener('click', () => {
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateX(100%)';
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    toast.remove();
+                }
+            }, 300);
+        });
+        
+        // Eliminar la notificación automáticamente después de 5 segundos
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateX(100%)';
+            setTimeout(() => {
+                if (toast && toast.parentNode) {
+                    toast.remove();
+                }
+            }, 300);
         }, 5000);
     }
 
@@ -853,5 +964,6 @@
         console.log('Portal iniciado correctamente');
     });
     </script>
+    <div class="toast-container" id="toastContainer"></div>
 </body>
 </html>
