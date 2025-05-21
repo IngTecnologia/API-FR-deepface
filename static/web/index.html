@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -6,370 +5,83 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Portal de Registro - Sistema Biométrico</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f5f5f5;
-            color: #333;
-            line-height: 1.6;
-        }
-        
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        
-        .header {
-            text-align: center;
-            background: white;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
-        }
-        
-        .header h1 {
-            color: #6650a4;
-            font-size: 2.5em;
-            margin-bottom: 10px;
-        }
-        
-        .form-card {
-            background: white;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
-        }
-        
-        .form-section {
-            margin-bottom: 30px;
-        }
-        
-        .form-section h3 {
-            color: #6650a4;
-            margin-bottom: 15px;
-            font-size: 1.3em;
-            border-left: 4px solid #6650a4;
-            padding-left: 10px;
-        }
-        
-        .form-group {
-            margin-bottom: 20px;
-        }
-        
-        .form-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-        }
-        
-        @media (max-width: 768px) {
-            .form-row {
-                grid-template-columns: 1fr;
-            }
-        }
-        
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-        }
-        
-        input, select {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #ddd;
-            border-radius: 8px;
-            font-size: 16px;
-        }
-        
-        input:focus, select:focus {
-            outline: none;
-            border-color: #6650a4;
-        }
-        
-        .upload-container {
-            text-align: center;
-            padding: 40px 20px;
-            border: 3px dashed #6650a4;
-            border-radius: 10px;
-            background: #f8f6ff;
-            transition: all 0.3s ease;
-            cursor: pointer;
-        }
-        
-        .upload-container:hover {
-            background: #f0ebff;
-            border-color: #8866d9;
-        }
-        
-        .upload-container.dragover {
-            background: #e8d5ff;
-            border-color: #6650a4;
-            border-style: solid;
-        }
-        
-        .upload-container.has-image {
-            border-style: solid;
-            border-color: #4CAF50;
-            background: #f1f8e9;
-        }
-        
-        .upload-icon {
-            font-size: 48px;
-            color: #6650a4;
-            margin-bottom: 20px;
-        }
-        
-        .upload-text {
-            font-size: 18px;
-            color: #6650a4;
-            margin-bottom: 10px;
-            font-weight: bold;
-        }
-        
-        .upload-subtitle {
-            font-size: 14px;
-            color: #666;
-        }
-        
-        .file-input {
-            display: none;
-        }
-        
-        .preview-container {
-            margin-top: 20px;
-            display: none;
-        }
-        
-        .preview-image {
-            max-width: 400px;
-            width: 100%;
-            height: 300px;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            object-fit: cover;
-        }
-        
-        .image-info {
-            margin-top: 15px;
-            padding: 10px;
-            background: #f5f5f5;
-            border-radius: 8px;
-            font-size: 14px;
-            color: #666;
-        }
-        
-        .image-actions {
-            margin-top: 15px;
-        }
-        
-        button {
-            background: #6650a4;
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            margin: 5px;
-        }
-        
-        button:hover:not(:disabled) {
-            background: #8866d9;
-        }
-        
-        button:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-        }
-        
-        .btn-secondary {
-            background: #625b71;
-        }
-        
-        .btn-success {
-            background: #4CAF50;
-        }
-        
-        .btn-danger {
-            background: #f44336;
-        }
-        
-        .hidden {
-            display: none;
-        }
-        
-        .locations-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 15px;
-            margin-top: 15px;
-        }
-        
-        .location-item {
-            position: relative;
-        }
-        
-        .location-checkbox {
-            position: absolute;
-            opacity: 0;
-            cursor: pointer;
-            width: 100%;
-            height: 100%;
-        }
-        
-        .location-label {
-            display: block;
-            padding: 20px;
-            background: white;
-            border: 2px solid #ddd;
-            border-radius: 8px;
-            cursor: pointer;
-            text-align: center;
-            transition: all 0.3s;
-        }
-        
-        .location-checkbox:checked + .location-label {
-            background: #6650a4;
-            color: white;
-            border-color: #6650a4;
-        }
-        
-        .location-checkbox:checked + .location-label::after {
-            content: '✓';
-            position: absolute;
-            top: 10px;
-            right: 15px;
-            font-size: 18px;
-            font-weight: bold;
-        }
-        
-        .alert {
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            font-weight: bold;
-        }
-        
-        .alert-success {
-            background: #e8f5e9;
-            color: #4CAF50;
-            border: 1px solid #4CAF50;
-        }
-        
-        .alert-error {
-            background: #ffebee;
-            color: #B00020;
-            border: 1px solid #B00020;
-        }
-        
-        .alert-warning {
-            background: #fff3e0;
-            color: #FF9800;
-            border: 1px solid #FF9800;
-        }
-        
-        .loading {
-            display: none;
-            text-align: center;
-            padding: 20px;
-        }
-        
-        .loading.show {
-            display: block;
-        }
-        
-        .spinner {
-            width: 24px;
-            height: 24px;
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #6650a4;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            display: inline-block;
-            margin-right: 10px;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        .toast-container {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            z-index: 1000;
-            max-width: 350px;
-        }
+        /* Estilos comunes */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background-color: #f5f5f5; color: #333; line-height: 1.6; }
+        .container { max-width: 800px; margin: 0 auto; padding: 20px; }
 
-        .toast {
-            padding: 15px 20px;
-            border-radius: 8px;
-            margin-bottom: 10px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            animation: slideIn 0.3s ease-out forwards;
-            opacity: 0;
-            display: flex;
-            align-items: center;
-        }
-
-        @keyframes slideIn {
-            from {
-                transform: translateX(100%);
-                opacity: 0;
-            }
-            to {
-                transform: translateX(0);
-                opacity: 1;
-            }
-        }
-
-        .toast-success {
-            background: #e8f5e9;
-            color: #4CAF50;
-            border-left: 4px solid #4CAF50;
-        }
-
-        .toast-error {
-            background: #ffebee;
-            color: #B00020;
-            border-left: 4px solid #B00020;
-        }
-
-        .toast-warning {
-            background: #fff3e0;
-            color: #FF9800;
-            border-left: 4px solid #FF9800;
-        }
-
-        .toast-icon {
-            margin-right: 10px;
-            font-size: 20px;
-        }
-
-        .toast-content {
-            flex: 1;
-        }
-
-        .toast-close {
-            cursor: pointer;
-            margin-left: 10px;
-            font-size: 18px;
-            opacity: 0.7;
-        }
-
-        .toast-close:hover {
-            opacity: 1;
-        }
+        /* Header y Secciones */
+        .header { text-align: center; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .header h1 { color: #6650a4; font-size: 2.5em; margin-bottom: 10px; }
+        .form-card { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .form-section { margin-bottom: 30px; }
+        .form-section h3 { color: #6650a4; margin-bottom: 15px; font-size: 1.3em; border-left: 4px solid #6650a4; padding-left: 10px; }
+        
+        /* Formularios y Campos */
+        .form-group { margin-bottom: 20px; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        @media (max-width: 768px) { .form-row { grid-template-columns: 1fr; } }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input, select { width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; }
+        input:focus, select:focus { outline: none; border-color: #6650a4; }
+        
+        /* Subida de imágenes */
+        .upload-container { text-align: center; padding: 40px 20px; border: 3px dashed #6650a4; border-radius: 10px; background: #f8f6ff; transition: all 0.3s ease; cursor: pointer; }
+        .upload-container:hover { background: #f0ebff; border-color: #8866d9; }
+        .upload-container.dragover { background: #e8d5ff; border-color: #6650a4; border-style: solid; }
+        .upload-container.has-image { border-style: solid; border-color: #4CAF50; background: #f1f8e9; }
+        .upload-icon { font-size: 48px; color: #6650a4; margin-bottom: 20px; }
+        .upload-text { font-size: 18px; color: #6650a4; margin-bottom: 10px; font-weight: bold; }
+        .upload-subtitle { font-size: 14px; color: #666; }
+        .file-input { display: none; }
+        
+        /* Visualización de imágenes */
+        .preview-container { margin-top: 20px; display: none; }
+        .preview-image { max-width: 400px; width: 100%; height: 300px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); object-fit: cover; }
+        .image-info { margin-top: 15px; padding: 10px; background: #f5f5f5; border-radius: 8px; font-size: 14px; color: #666; }
+        .image-actions { margin-top: 15px; }
+        
+        /* Botones */
+        button { background: #6650a4; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; margin: 5px; }
+        button:hover:not(:disabled) { background: #8866d9; }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+        .btn-secondary { background: #625b71; }
+        .btn-success { background: #4CAF50; }
+        .btn-danger { background: #f44336; }
+        
+        /* Grid de ubicaciones */
+        .locations-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; margin-top: 15px; }
+        .location-item { position: relative; }
+        .location-checkbox { position: absolute; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+        .location-label { display: block; padding: 20px; background: white; border: 2px solid #ddd; border-radius: 8px; cursor: pointer; text-align: center; transition: all 0.3s; }
+        .location-checkbox:checked + .location-label { background: #6650a4; color: white; border-color: #6650a4; }
+        .location-checkbox:checked + .location-label::after { content: '✓'; position: absolute; top: 10px; right: 15px; font-size: 18px; font-weight: bold; }
+        
+        /* Ubicaciones personalizadas */
+        .custom-locations { margin-top: 20px; border-top: 1px solid #ddd; padding-top: 20px; }
+        .custom-location-item { background: #f8f6ff; padding: 15px; border-radius: 8px; margin-bottom: 15px; position: relative; border: 1px solid #ddd; }
+        .custom-location-remove { position: absolute; top: 10px; right: 10px; background: #f44336; color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-weight: bold; }
+        .custom-location-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
+        #addCustomLocationBtn { margin-top: 10px; width: auto; display: inline-block; }
+        
+        /* Alertas y notificaciones */
+        .alert { padding: 15px; border-radius: 8px; margin-bottom: 20px; font-weight: bold; }
+        .loading { display: none; text-align: center; padding: 20px; }
+        .loading.show { display: block; }
+        .spinner { width: 24px; height: 24px; border: 3px solid #f3f3f3; border-top: 3px solid #6650a4; border-radius: 50%; animation: spin 1s linear infinite; display: inline-block; margin-right: 10px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        /* Toasts */
+        .toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 1000; max-width: 350px; }
+        .toast { padding: 15px 20px; border-radius: 8px; margin-bottom: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); animation: slideIn 0.3s ease-out forwards; opacity: 0; display: flex; align-items: center; }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        .toast-success { background: #e8f5e9; color: #4CAF50; border-left: 4px solid #4CAF50; }
+        .toast-error { background: #ffebee; color: #B00020; border-left: 4px solid #B00020; }
+        .toast-warning { background: #fff3e0; color: #FF9800; border-left: 4px solid #FF9800; }
+        .toast-icon { margin-right: 10px; font-size: 20px; }
+        .toast-content { flex: 1; }
+        .toast-close { cursor: pointer; margin-left: 10px; font-size: 18px; opacity: 0.7; }
+        .toast-close:hover { opacity: 1; }
     </style>
 </head>
 <body>
@@ -455,8 +167,8 @@
                         <option value="TERMINAL_002">Terminal 002 - Oficina Tauramena</option>
                         <option value="TERMINAL_003">Terminal 003 - Campo Cupiagua</option>
                         <option value="TERMINAL_004">Terminal 004 - Campo Cusiana</option>
-                        <option value="TERMINAL_003">Terminal 003 - Campo Floreaña</option>
-                        <option value="TERMINAL_004">Terminal 004 - Oficina Bogotá</option>
+                        <option value="TERMINAL_005">Terminal 005 - Campo Floreña</option>
+                        <option value="TERMINAL_006">Terminal 006 - Oficina Bogotá</option>
                     </select>
                 </div>
             </div>
@@ -465,7 +177,7 @@
             <div class="form-section">
                 <h3>📍 Ubicaciones Permitidas</h3>
                 <p style="margin-bottom: 15px; color: #666;">
-                    Seleccione las ubicaciones donde este usuario podrá registrar asistencia.
+                    Seleccione las ubicaciones predefinidas donde este usuario podrá registrar asistencia.
                     Puede seleccionar múltiples ubicaciones.
                 </p>
                 
@@ -473,18 +185,20 @@
                     <!-- Las ubicaciones se cargarán aquí -->
                 </div>
                 
-                <!-- Campos opcionales de ubicación -->
-                <div class="form-row" style="margin-top: 20px;">
-                    <div class="form-group">
-                        <label for="radio_metros">Radio en metros</label>
-                        <input type="number" id="radio_metros" name="radio_metros" value="200" min="10" max="1000" placeholder="200">
-                        <small style="color: #666; font-size: 12px;">Por defecto: 200 metros</small>
+                <!-- Ubicaciones personalizadas -->
+                <div class="custom-locations">
+                    <h4 style="margin-bottom: 15px;">Ubicaciones Personalizadas</h4>
+                    <p style="margin-bottom: 15px; color: #666;">
+                        Agregue ubicaciones personalizadas con sus propias coordenadas, radio y nombre.
+                    </p>
+                    
+                    <div id="customLocationsContainer">
+                        <!-- Las ubicaciones personalizadas se agregarán aquí -->
                     </div>
-                    <div class="form-group">
-                        <label for="ubicacion_nombre">Nombre de ubicación personalizada</label>
-                        <input type="text" id="ubicacion_nombre" name="ubicacion_nombre" placeholder="Principal" maxlength="50">
-                        <small style="color: #666; font-size: 12px;">Por defecto: Principal</small>
-                    </div>
+                    
+                    <button type="button" id="addCustomLocationBtn" class="btn-secondary">
+                        ➕ Agregar Ubicación Personalizada
+                    </button>
                 </div>
             </div>
 
@@ -499,6 +213,8 @@
             </button>
         </form>
     </div>
+
+    <div class="toast-container" id="toastContainer"></div>
 
     <!-- JavaScript -->
     <script>
@@ -561,6 +277,7 @@
 
     // Variables globales
     let uploadedImageFile = null;
+    let customLocationCounter = 0;
 
     // Elementos del DOM
     const elements = {
@@ -581,13 +298,13 @@
         removeImageBtn: document.getElementById('removeImageBtn'),
         changeImageBtn: document.getElementById('changeImageBtn'),
         locationsGrid: document.getElementById('locationsGrid'),
-        radio_metros: document.getElementById('radio_metros'),
-        ubicacion_nombre: document.getElementById('ubicacion_nombre'),
+        customLocationsContainer: document.getElementById('customLocationsContainer'),
+        addCustomLocationBtn: document.getElementById('addCustomLocationBtn'),
         loadingIndicator: document.getElementById('loadingIndicator'),
         submitBtn: document.getElementById('submitBtn')
     };
 
-    // Función para mostrar alertas
+    // Función para mostrar alertas/notificaciones
     function showAlert(message, type) {
         // Crear o recuperar el contenedor de notificaciones
         let toastContainer = document.getElementById('toastContainer');
@@ -720,61 +437,6 @@
         elements.fileInput.value = '';
     }
 
-    // Event Listeners para drag and drop
-    elements.uploadContainer.addEventListener('click', () => {
-        elements.fileInput.click();
-    });
-
-    elements.uploadContainer.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        elements.uploadContainer.classList.add('dragover');
-    });
-
-    elements.uploadContainer.addEventListener('dragleave', (e) => {
-        e.preventDefault();
-        elements.uploadContainer.classList.remove('dragover');
-    });
-
-    elements.uploadContainer.addEventListener('drop', (e) => {
-        e.preventDefault();
-        elements.uploadContainer.classList.remove('dragover');
-        
-        const files = e.dataTransfer.files;
-        if (files.length > 0) {
-            handleFileSelect(files[0]);
-        }
-    });
-
-    // Event listener para selección de archivo
-    elements.fileInput.addEventListener('change', (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            handleFileSelect(file);
-        }
-    });
-
-    // Event listeners para botones de imagen
-    elements.removeImageBtn.addEventListener('click', removeImage);
-    elements.changeImageBtn.addEventListener('click', () => {
-        elements.fileInput.click();
-    });
-
-    // Event listener para actualizar nombre cuando cambia la cédula
-    elements.cedula.addEventListener('input', function() {
-        this.value = this.value.replace(/[^0-9]/g, '');
-        
-        // Actualizar información si hay imagen
-        if (uploadedImageFile) {
-            const cedula = this.value.trim() || 'sin-cedula';
-            const newFileName = `${cedula}.jpg`;
-            
-            elements.imageInfo.innerHTML = elements.imageInfo.innerHTML.replace(
-                /(<strong>Se guardará como:<\/strong>) [^<]+/,
-                `$1 ${newFileName}`
-            );
-        }
-    });
-
     // Función para inicializar ubicaciones
     function initLocations() {
         console.log('Inicializando ubicaciones...');
@@ -786,10 +448,16 @@
             locationDiv.className = 'location-item';
             
             locationDiv.innerHTML = `
-                <input type="checkbox" class="location-checkbox" id="location_${location.id}" value="${location.id}">
+                <input type="checkbox" class="location-checkbox" id="location_${location.id}" 
+                       data-id="${location.id}" 
+                       data-lat="${location.lat}" 
+                       data-lng="${location.lng}" 
+                       data-radius="${location.radius}" 
+                       data-name="${location.name}">
                 <label class="location-label" for="location_${location.id}">
                     <strong>${location.name}</strong>
                     <br><small>${location.description}</small>
+                    <br><small>Radio: ${location.radius}m</small>
                 </label>
             `;
             
@@ -799,22 +467,145 @@
         console.log(`${CONFIG.LOCATIONS.length} ubicaciones cargadas`);
     }
 
-    // Función para obtener ubicaciones seleccionadas
-    function getSelectedLocations() {
-        const checkboxes = document.querySelectorAll('.location-checkbox:checked');
-        const selectedIds = Array.from(checkboxes).map(cb => cb.value);
+    // Función para agregar una nueva ubicación personalizada
+    function addCustomLocation() {
+        const id = `custom-location-${customLocationCounter++}`;
         
-        return CONFIG.LOCATIONS.filter(loc => selectedIds.includes(loc.id));
+        const locationDiv = document.createElement('div');
+        locationDiv.className = 'custom-location-item';
+        locationDiv.dataset.id = id;
+        
+        locationDiv.innerHTML = `
+            <div class="custom-location-remove" onclick="removeCustomLocation('${id}')">×</div>
+            <div class="custom-location-form">
+                <div class="form-group">
+                    <label for="${id}-name">Nombre *</label>
+                    <input type="text" id="${id}-name" required placeholder="Nombre de la ubicación">
+                </div>
+                <div class="form-group">
+                    <label for="${id}-lat">Latitud *</label>
+                    <input type="number" id="${id}-lat" required step="any" placeholder="Ej: 4.6867602">
+                </div>
+                <div class="form-group">
+                    <label for="${id}-lng">Longitud *</label>
+                    <input type="number" id="${id}-lng" required step="any" placeholder="Ej: -74.0529746">
+                </div>
+                <div class="form-group">
+                    <label for="${id}-radius">Radio (metros) *</label>
+                    <input type="number" id="${id}-radius" required min="10" value="200" placeholder="Ej: 200">
+                </div>
+            </div>
+        `;
+        
+        elements.customLocationsContainer.appendChild(locationDiv);
+        
+        // Retornar el ID para referencias futuras
+        return id;
     }
 
-    // Función para validar formulario
+    // Función para remover una ubicación personalizada
+    function removeCustomLocation(id) {
+        const locationDiv = document.querySelector(`.custom-location-item[data-id="${id}"]`);
+        if (locationDiv) {
+            locationDiv.remove();
+            showAlert('Ubicación personalizada eliminada', 'success');
+        }
+    }
+
+    // Función para recopilar todas las ubicaciones seleccionadas (predefinidas + personalizadas)
+    function getAllSelectedLocations() {
+        const selectedLocations = [];
+        
+        // 1. Obtener ubicaciones predefinidas seleccionadas
+        const checkboxes = document.querySelectorAll('.location-checkbox:checked');
+        checkboxes.forEach(checkbox => {
+            selectedLocations.push({
+                id: checkbox.dataset.id,
+                name: checkbox.dataset.name,
+                lat: parseFloat(checkbox.dataset.lat),
+                lng: parseFloat(checkbox.dataset.lng),
+                radio_metros: parseInt(checkbox.dataset.radius),
+                tipo: 'predefinida'
+            });
+        });
+        
+        // 2. Obtener ubicaciones personalizadas
+        const customLocationDivs = document.querySelectorAll('.custom-location-item');
+        customLocationDivs.forEach(div => {
+            const id = div.dataset.id;
+            const nameInput = document.getElementById(`${id}-name`);
+            const latInput = document.getElementById(`${id}-lat`);
+            const lngInput = document.getElementById(`${id}-lng`);
+            const radiusInput = document.getElementById(`${id}-radius`);
+            
+            if (nameInput && latInput && lngInput && radiusInput &&
+                nameInput.value && latInput.value && lngInput.value && radiusInput.value) {
+                
+                selectedLocations.push({
+                    id: id,
+                    name: nameInput.value.trim(),
+                    lat: parseFloat(latInput.value),
+                    lng: parseFloat(lngInput.value),
+                    radio_metros: parseInt(radiusInput.value),
+                    tipo: 'personalizada'
+                });
+            }
+        });
+        
+        return selectedLocations;
+    }
+    // Función para validar ubicaciones
+    function validateLocations() {
+        const selectedLocations = getAllSelectedLocations();
+        
+            if (selectedLocations.length === 0) {
+                showAlert('Seleccione al menos una ubicación predefinida o agregue una ubicación personalizada', 'warning');
+                return false;
+            }
+            
+            // Validar que las ubicaciones personalizadas tengan información completa
+            const customLocationDivs = document.querySelectorAll('.custom-location-item');
+            for (const div of customLocationDivs) {
+                const id = div.dataset.id;
+                const nameInput = document.getElementById(`${id}-name`);
+                const latInput = document.getElementById(`${id}-lat`);
+                const lngInput = document.getElementById(`${id}-lng`);
+                const radiusInput = document.getElementById(`${id}-radius`);
+                
+                if (!nameInput.value.trim()) {
+                    showAlert('Ingrese un nombre para todas las ubicaciones personalizadas', 'warning');
+                    nameInput.focus();
+                    return false;
+                }
+                
+                if (!latInput.value || isNaN(parseFloat(latInput.value))) {
+                    showAlert('Ingrese una latitud válida para todas las ubicaciones personalizadas', 'warning');
+                    latInput.focus();
+                    return false;
+                }
+                
+                if (!lngInput.value || isNaN(parseFloat(lngInput.value))) {
+                    showAlert('Ingrese una longitud válida para todas las ubicaciones personalizadas', 'warning');
+                    lngInput.focus();
+                    return false;
+                }
+                
+                if (!radiusInput.value || parseInt(radiusInput.value) < 10) {
+                    showAlert('Ingrese un radio válido (mínimo 10 metros) para todas las ubicaciones personalizadas', 'warning');
+                    radiusInput.focus();
+                    return false;
+                }
+            }
+            
+            return true;
+        }
+    // Función para validar el formulario completo
     function validateForm() {
         const cedula = elements.cedula.value.trim();
         const nombre = elements.nombre.value.trim();
         const empresa = elements.empresa.value.trim();
         const perfil_ubicacion = elements.perfil_ubicacion.value;
         const terminal_id = elements.terminal_id.value;
-        const selectedLocations = getSelectedLocations();
 
         if (!cedula || cedula.length < 5) {
             showAlert('Ingrese un número de cédula válido (mínimo 5 dígitos)', 'warning');
@@ -851,15 +642,15 @@
             return false;
         }
 
-        if (selectedLocations.length === 0) {
-            showAlert('Seleccione al menos una ubicación', 'warning');
+        // Validar ubicaciones
+        if (!validateLocations()) {
             return false;
         }
 
         return true;
     }
 
-    // Función para enviar formulario
+    // Función para enviar el formulario
     async function handleFormSubmit(event) {
         event.preventDefault();
         
@@ -881,7 +672,7 @@
         }
     }
 
-    // Función para registrar usuario
+    // Función para registrar usuario en el servidor
     async function registerUser() {
         const formData = new FormData();
         
@@ -897,20 +688,26 @@
         // Agregar imagen con nombre de cédula
         formData.append('imagen', uploadedImageFile, `${cedula}.jpg`);
         
-        // Obtener ubicación seleccionada (primera si hay múltiples)
-        const selectedLocations = getSelectedLocations();
-        const firstLocation = selectedLocations[0];
+        // Recopilar todas las ubicaciones seleccionadas
+        const selectedLocations = getAllSelectedLocations();
         
-        // Usar lat/lng de la ubicación seleccionada
+        // Verificar si hay ubicaciones seleccionadas
+        if (selectedLocations.length === 0) {
+            throw new Error('Debe seleccionar al menos una ubicación');
+        }
+        
+        // Convertir ubicaciones a formato JSON para enviar en un solo campo
+        formData.append('ubicaciones', JSON.stringify(selectedLocations));
+        
+        // Utilizar la primera ubicación para compatibilidad con la API actual
+        // (la API original espera una sola ubicación con lat, lng, radio_metros)
+        const firstLocation = selectedLocations[0];
         formData.append('lat', firstLocation.lat);
         formData.append('lng', firstLocation.lng);
+        formData.append('radio_metros', firstLocation.radio_metros);
+        formData.append('ubicacion_nombre', firstLocation.name);
         
-        // Campos opcionales con valores por defecto
-        const radioMetros = elements.radio_metros.value || 200;  // Backend usa 200 por defecto
-        const ubicacionNombre = elements.ubicacion_nombre.value || 'Principal';
-        
-        formData.append('radio_metros', radioMetros);
-        formData.append('ubicacion_nombre', ubicacionNombre);
+        console.log('Enviando datos con ubicaciones:', selectedLocations);
         
         const response = await fetch(`${CONFIG.API_BASE_URL}/register-user`, {
             method: 'POST',
@@ -942,10 +739,10 @@
         elements.form.reset();
         removeImage();
         
-        // Restablecer valores por defecto
-        elements.radio_metros.value = 200;  // Coincide con backend
-        elements.ubicacion_nombre.value = '';
+        // Limpiar ubicaciones personalizadas
+        elements.customLocationsContainer.innerHTML = '';
         
+        // Desmarcar ubicaciones predefinidas
         document.querySelectorAll('.location-checkbox').forEach(cb => {
             cb.checked = false;
         });
@@ -955,25 +752,93 @@
         }, 1000);
     }
 
-    // Event Listeners
-    elements.form.addEventListener('submit', handleFormSubmit);
-
-    // Prevenir comportamiento por defecto en toda la página
-    document.addEventListener('dragover', (e) => {
-        e.preventDefault();
-    });
-
-    document.addEventListener('drop', (e) => {
-        e.preventDefault();
-    });
-
-    // Inicialización cuando el DOM esté listo
-    document.addEventListener('DOMContentLoaded', () => {
-        console.log('Iniciando portal...');
+    // Función principal para inicializar la aplicación
+    function initApp() {
+        console.log('Iniciando portal de registro...');
+        
+        // Hacer global la función removeCustomLocation para los botones
+        window.removeCustomLocation = removeCustomLocation;
+        
+        // Inicializar componentes
         initLocations();
+        
+        // Event Listeners para la aplicación
+        
+        // Event Listeners para drag and drop
+        elements.uploadContainer.addEventListener('click', () => {
+            elements.fileInput.click();
+        });
+
+        elements.uploadContainer.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            elements.uploadContainer.classList.add('dragover');
+        });
+
+        elements.uploadContainer.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            elements.uploadContainer.classList.remove('dragover');
+        });
+
+        elements.uploadContainer.addEventListener('drop', (e) => {
+            e.preventDefault();
+            elements.uploadContainer.classList.remove('dragover');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFileSelect(files[0]);
+            }
+        });
+
+        // Event listener para selección de archivo
+        elements.fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                handleFileSelect(file);
+            }
+        });
+
+        // Event listeners para botones de imagen
+        elements.removeImageBtn.addEventListener('click', removeImage);
+        elements.changeImageBtn.addEventListener('click', () => {
+            elements.fileInput.click();
+        });
+
+        // Event listener para actualizar nombre cuando cambia la cédula
+        elements.cedula.addEventListener('input', function() {
+            this.value = this.value.replace(/[^0-9]/g, '');
+            
+            // Actualizar información si hay imagen
+            if (uploadedImageFile) {
+                const cedula = this.value.trim() || 'sin-cedula';
+                const newFileName = `${cedula}.jpg`;
+                
+                elements.imageInfo.innerHTML = elements.imageInfo.innerHTML.replace(
+                    /(<strong>Se guardará como:<\/strong>) [^<]+/,
+                    `$1 ${newFileName}`
+                );
+            }
+        });
+        
+        // Event listener para botón de agregar ubicación personalizada
+        elements.addCustomLocationBtn.addEventListener('click', addCustomLocation);
+        
+        // Event listener para envío del formulario
+        elements.form.addEventListener('submit', handleFormSubmit);
+        
+        // Prevenir comportamiento por defecto en toda la página para drag & drop
+        document.addEventListener('dragover', (e) => {
+            e.preventDefault();
+        });
+
+        document.addEventListener('drop', (e) => {
+            e.preventDefault();
+        });
+        
         console.log('Portal iniciado correctamente');
-    });
+    }
+
+    // Iniciar la aplicación cuando el DOM esté listo
+    document.addEventListener('DOMContentLoaded', initApp);
     </script>
-    <div class="toast-container" id="toastContainer"></div>
 </body>
 </html>

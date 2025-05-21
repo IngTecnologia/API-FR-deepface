@@ -1,3 +1,4 @@
+import json
 from fastapi import APIRouter, UploadFile, Form, HTTPException
 from pydantic import BaseModel
 from typing import List, Optional
@@ -42,19 +43,24 @@ async def register_user(
     empresa: str = Form(...),
     email: str = Form(None),
     telefono: str = Form(None),
-    perfil_ubicacion: str = Form("fijo"),  # por defecto es fijo
+    perfil_ubicacion: str = Form("fijo"),
     terminal_id: str = Form(...),
     imagen: UploadFile = Form(...),
     lat: float = Form(...),
     lng: float = Form(...),
-    radio_metros: int = Form(200),  # Radio predeterminado
-    ubicacion_nombre: str = Form("Principal")  # Nombre descriptivo de la ubicación
+    radio_metros: int = Form(200),
+    ubicacion_nombre: str = Form("Principal"),
+    ubicaciones: Optional[str] = Form(None)
 ):
-    # Validar perfil_ubicacion
+    # Registro detallado para debug
+    print(f"Procesando registro de usuario: {cedula}")
+    print(f"Ubicaciones recibidas (raw): {ubicaciones}")
+    
+    # Validaciones iniciales
     if perfil_ubicacion not in ["libre", "movil", "fijo"]:
         raise HTTPException(status_code=400, detail="Perfil de ubicación debe ser 'libre', 'movil' o 'fijo'")
     
-    # Verificar si la cédula ya existe
+    # Verificar cédula existente
     if os.path.exists(USERS_FILE):
         with open(USERS_FILE, "r") as f:
             usuarios = json.load(f)
@@ -63,7 +69,7 @@ async def register_user(
     else:
         usuarios = []
     
-    # Guardar imagen base
+    # Guardar imagen
     imagen_path = os.path.join(BASE_IMAGE_PATH, f"{cedula}.jpg")
     with open(imagen_path, "wb") as f:
         shutil.copyfileobj(imagen.file, f)
@@ -81,56 +87,92 @@ async def register_user(
     
     usuarios.append(nuevo_usuario)
     
-    # Guardar en archivo
     with open(USERS_FILE, "w", encoding="utf-8") as f:
         json.dump(usuarios, f, indent=2, ensure_ascii=False)
     
-    # Registrar ubicación
+    # PROCESAMIENTO DE UBICACIONES
+    
+    # Cargar ubicaciones existentes
     if os.path.exists(UBICACIONES_FILE):
-        with open(UBICACIONES_FILE, "r") as f:
-            ubicaciones = json.load(f)
+        with open(UBICACIONES_FILE, "r", encoding="utf-8") as f:
+            ubicaciones_db = json.load(f)
     else:
-        ubicaciones = []
+        ubicaciones_db = []
     
-    # Buscar si el usuario ya tiene ubicaciones registradas
-    usuario_existente = next((i for i, u in enumerate(ubicaciones) if u["cedula"] == cedula), None)
-    
-    nueva_ubicacion = {
-        "lat": lat,
-        "lng": lng,
-        "radio_metros": radio_metros,
-        "nombre": ubicacion_nombre
+    # Preparar estructura para ubicaciones
+    ubicaciones_usuario = {
+        "cedula": cedula,
+        "nombre_usuario": nombre,
+        "ubicaciones": []  # Lista vacía que llenaremos
     }
     
-    if usuario_existente is not None:
-        # Si ya existe, agregar la ubicación a la lista de ubicaciones
-        if "ubicaciones" in ubicaciones[usuario_existente]:
-            ubicaciones[usuario_existente]["ubicaciones"].append(nueva_ubicacion)
-        else:
-            # Migrar formato antiguo a nuevo formato
-            ubicaciones[usuario_existente] = {
-                "cedula": cedula,
-                "nombre_usuario": nombre,
-                "ubicaciones": [
-                    {
-                        "lat": ubicaciones[usuario_existente].get("lat", lat),
-                        "lng": ubicaciones[usuario_existente].get("lng", lng),
-                        "radio_metros": ubicaciones[usuario_existente].get("radio_metros", radio_metros),
-                        "nombre": "Principal"
-                    },
-                    nueva_ubicacion
-                ]
-            }
-    else:
-        # Si no existe, crear nueva entrada
-        ubicaciones.append({
-            "cedula": cedula,
-            "nombre_usuario": nombre,
-            "ubicaciones": [nueva_ubicacion]
+    # Lista para almacenar las ubicaciones procesadas
+    ubicaciones_procesadas = []
+    
+    # Procesar JSON de ubicaciones
+    if ubicaciones:
+        print(f"Procesando JSON de ubicaciones...")
+        try:
+            # Decodificar JSON
+            ubicaciones_data = json.loads(ubicaciones)
+            print(f"JSON decodificado: {type(ubicaciones_data)}, contenido: {ubicaciones_data}")
+            
+            if isinstance(ubicaciones_data, list):
+                for idx, ubicacion in enumerate(ubicaciones_data):
+                    print(f"Procesando ubicación {idx+1}/{len(ubicaciones_data)}: {ubicacion}")
+                    
+                    # Extraer valores con manejo de diferentes formatos posibles
+                    try:
+                        nueva_ubicacion = {
+                            "lat": float(ubicacion.get("lat")),
+                            "lng": float(ubicacion.get("lng")),
+                            "radio_metros": int(ubicacion.get("radio_metros", ubicacion.get("radius", 200))),
+                            "nombre": str(ubicacion.get("name", ubicacion.get("nombre", f"Ubicación {idx+1}")))
+                        }
+                        print(f"Ubicación {idx+1} procesada: {nueva_ubicacion}")
+                        ubicaciones_procesadas.append(nueva_ubicacion)
+                    except Exception as e:
+                        print(f"Error procesando ubicación {idx+1}: {e}")
+            else:
+                print(f"ADVERTENCIA: ubicaciones_data no es una lista, es: {type(ubicaciones_data)}")
+        except Exception as e:
+            print(f"Error procesando JSON de ubicaciones: {str(e)}")
+    
+    # Si no hay ubicaciones procesadas del JSON, usar la ubicación predeterminada
+    if not ubicaciones_procesadas:
+        print("No se procesaron ubicaciones del JSON. Usando valores predeterminados.")
+        ubicaciones_procesadas.append({
+            "lat": lat,
+            "lng": lng,
+            "radio_metros": radio_metros,
+            "nombre": ubicacion_nombre
         })
     
+    # Asignar ubicaciones procesadas al usuario
+    ubicaciones_usuario["ubicaciones"] = ubicaciones_procesadas
+    print(f"Total de ubicaciones asignadas al usuario: {len(ubicaciones_procesadas)}")
+    
+    # Buscar y actualizar o agregar el usuario
+    usuario_index = None
+    for idx, user in enumerate(ubicaciones_db):
+        if user.get("cedula") == cedula:
+            usuario_index = idx
+            break
+    
+    if usuario_index is not None:
+        # Actualizar usuario existente
+        print(f"Actualizando ubicaciones para usuario existente")
+        ubicaciones_db[usuario_index] = ubicaciones_usuario
+    else:
+        # Agregar nuevo usuario
+        print(f"Agregando nuevo usuario con ubicaciones")
+        ubicaciones_db.append(ubicaciones_usuario)
+    
+    # Guardar cambios
     with open(UBICACIONES_FILE, "w", encoding="utf-8") as f:
-        json.dump(ubicaciones, f, indent=2, ensure_ascii=False)
+        json.dump(ubicaciones_db, f, indent=2, ensure_ascii=False)
+    
+    print(f"Archivo de ubicaciones actualizado con éxito")
     
     # Crear solicitud de registro para terminal
     if os.path.exists(TERMINAL_REQUESTS_FILE):
@@ -153,13 +195,17 @@ async def register_user(
     with open(TERMINAL_REQUESTS_FILE, "w") as f:
         json.dump(solicitudes, f, indent=2)
     
+    # Devolver respuesta con información detallada
     return {
         "success": True,
         "message": "Usuario registrado correctamente. Solicitud enviada a la terminal.",
         "user_id": cedula,
         "request_id": nueva_solicitud["id"],
-        "perfil_ubicacion": perfil_ubicacion
+        "perfil_ubicacion": perfil_ubicacion,
+        "ubicaciones_count": len(ubicaciones_procesadas),
+        "ubicaciones": [u["nombre"] for u in ubicaciones_procesadas]
     }
+
 
 # Endpoint para que la terminal obtenga las solicitudes pendientes
 @router.get("/terminal-requests/{terminal_id}")
@@ -402,3 +448,4 @@ async def get_user_profile(cedula: str):
                 }]
     
     return usuario
+
