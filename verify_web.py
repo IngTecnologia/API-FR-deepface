@@ -236,6 +236,7 @@ async def verify_web_face(
             detector_backend=DETECTOR_BACKEND,
             distance_metric=DISTANCE_METRIC,
             enforce_detection=True,
+            align=True,
             anti_spoofing=ANTI_SPOOFING
         )
 
@@ -315,7 +316,7 @@ async def verify_web_face(
         # Asegurarse de limpiar el archivo temporal en caso de error
         if tmp_path and os.path.exists(tmp_path):
             try:
-                os.remove(tmp_path)
+                #os.remove(tmp_path)
                 print(f"Archivo temporal eliminado después de error: {tmp_path}")
             except Exception as clean_error:
                 print(f"No se pudo eliminar el archivo temporal: {str(clean_error)}")

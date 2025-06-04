@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   face-api:
     build: .
@@ -8,12 +6,17 @@ services:
     ports:
       - "8000:8000"
     volumes:
+      # Usar rutas relativas para evitar problemas con espacios
       - ./imagenes_base:/app/imagenes_base
       - ./tmp_uploads:/app/tmp_uploads
-      - ./usuarios.json:/app/usuarios.json
-      - ./solicitudes_registro.json:/app/solicitudes_registro.json
-      - ./ubicaciones.json:/app/ubicaciones.json
-      - ./registros.json:/app/registros.json
+      # Crear archivos JSON si no existen, usando bind mounts relativos
+      - ./data:/app/data
+    environment:
+      # Variables de entorno para configurar rutas
+      - USERS_FILE=/app/data/usuarios.json
+      - TERMINAL_REQUESTS_FILE=/app/data/solicitudes_registro.json
+      - UBICACIONES_FILE=/app/data/ubicaciones.json
+      - RECORDS_FILE=/app/data/registros.json
 
   nginx:
     image: nginx:alpine
