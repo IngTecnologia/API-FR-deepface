@@ -14,6 +14,7 @@ from config import (
     FACE_MODEL, DETECTOR_BACKEND, DISTANCE_METRIC, ANTI_SPOOFING
 )
 from location import verificar_ubicacion, calcular_distancia_m
+from PIL import Image
 
 router = APIRouter()
 
@@ -73,6 +74,146 @@ def verificar_ubicacion(lat, lng, ubicaciones_usuario):
                 en_ubicacion = True
     
     return en_ubicacion, distancia_minima, nombre_ubicacion
+
+def rotate_image_pil(image_path, angle):
+    """
+    Rota una imagen usando PIL y la guarda temporalmente.
+    
+    Args:
+        image_path: Ruta de la imagen original
+        angle: Ángulo de rotación en grados (0, 90, 180, 270)
+        
+    Returns:
+        Ruta del archivo temporal con la imagen rotada
+    """
+    with Image.open(image_path) as img:
+        # Rotar la imagen
+        if angle == 90:
+            rotated = img.transpose(Image.ROTATE_270)  # PIL usa rotación inversa
+        elif angle == 180:
+            rotated = img.transpose(Image.ROTATE_180)
+        elif angle == 270:
+            rotated = img.transpose(Image.ROTATE_90)
+        else:
+            rotated = img  # 0 grados, sin rotación
+        
+        # Crear archivo temporal
+        temp_path = f"{image_path}_rotated_{angle}.jpg"
+        rotated.save(temp_path, "JPEG", quality=95)
+        
+        return temp_path
+
+def try_face_verification_with_rotations(base_image_path, test_image_path):
+    """
+    Intenta la verificación facial probando múltiples rotaciones de la imagen de prueba.
+    
+    Args:
+        base_image_path: Ruta de la imagen de referencia (sin rotar)
+        test_image_path: Ruta de la imagen a verificar
+        
+    Returns:
+        dict: Resultado de la verificación con información adicional
+    """
+    angles_to_try = [0, 90, 180, 270]
+    results = []
+    temp_files = []
+    
+    for angle in angles_to_try:
+        print(f"Probando rotación de {angle} grados...")
+        
+        # Crear imagen rotada
+        if angle == 0:
+            rotated_path = test_image_path
+        else:
+            try:
+                rotated_path = rotate_image_pil(test_image_path, angle)
+                temp_files.append(rotated_path)
+            except Exception as e:
+                print(f"Error al rotar imagen {angle}°: {str(e)}")
+                results.append({
+                    "rotation_angle": angle,
+                    "success": False,
+                    "error": f"Error al rotar: {str(e)}",
+                    "verified": False,
+                    "distance": 1.0
+                })
+                continue
+        
+        try:
+            # Intentar verificación con DeepFace
+            result = DeepFace.verify(
+                img1_path=base_image_path,
+                img2_path=rotated_path,
+                model_name=FACE_MODEL,
+                detector_backend=DETECTOR_BACKEND,
+                distance_metric=DISTANCE_METRIC,
+                enforce_detection=False,  # Ser más permisivo
+                align=True,
+                anti_spoofing=ANTI_SPOOFING
+            )
+            
+            # Agregar información de rotación al resultado
+            result["rotation_angle"] = angle
+            result["success"] = True
+            results.append(result)
+            
+            print(f"Rotación {angle}°: verified={result['verified']}, distance={result['distance']:.4f}")
+            
+            # Si encontramos una verificación exitosa, limpiar archivos y devolver inmediatamente
+            if result['verified']:
+                print(f"¡Verificación exitosa con rotación de {angle} grados!")
+                # Limpiar archivos temporales antes de retornar
+                for temp_file in temp_files:
+                    try:
+                        if os.path.exists(temp_file):
+                            os.remove(temp_file)
+                    except Exception as e:
+                        print(f"Error al eliminar archivo temporal {temp_file}: {e}")
+                
+                result["total_attempts"] = len(results)
+                return result
+                
+        except Exception as e:
+            print(f"Error en verificación con rotación {angle}°: {str(e)}")
+            results.append({
+                "rotation_angle": angle,
+                "success": False,
+                "error": str(e),
+                "verified": False,
+                "distance": 1.0
+            })
+    
+    # Si llegamos aquí, ninguna rotación fue exitosa
+    # Limpiar archivos temporales
+    for temp_file in temp_files:
+        try:
+            if os.path.exists(temp_file):
+                os.remove(temp_file)
+        except Exception as e:
+            print(f"Error al eliminar archivo temporal {temp_file}: {e}")
+    
+    # Buscar el mejor resultado entre los que no dieron error
+    valid_results = [r for r in results if r.get("success", False)]
+    
+    if valid_results:
+        # Devolver el resultado con menor distancia
+        best_attempt = min(valid_results, key=lambda x: x.get("distance", 1.0))
+        best_attempt["total_attempts"] = len(results)
+        print(f"Ninguna rotación exitosa. Mejor intento: {best_attempt['rotation_angle']}° con distancia {best_attempt['distance']:.4f}")
+        return best_attempt
+    else:
+        # Si todos fallaron, devolver un resultado genérico con el último error
+        error_messages = [r.get("error", "") for r in results if r.get("error")]
+        combined_error = "; ".join(error_messages) if error_messages else "No se pudo procesar ninguna rotación"
+        
+        return {
+            "verified": False,
+            "distance": 1.0,
+            "rotation_angle": 0,
+            "success": False,
+            "error": combined_error,
+            "total_attempts": len(results)
+        }
 
 # -------------------------------
 # Paso 1: Validar ubicación del usuario y generar token
@@ -179,7 +320,7 @@ def verify_web_init(
 
 
 # -------------------------------
-# Paso 2: Verificar rostro con token
+# Paso 2: Verificar rostro con token - MODIFICADO PARA ROTACIONES
 # -------------------------------
 @router.post("/verify-web/face")
 async def verify_web_face(
@@ -228,17 +369,22 @@ async def verify_web_face(
         with open(tmp_path, "wb") as f:
             shutil.copyfileobj(image.file, f)
 
-        # Verificar con DeepFace
-        result = DeepFace.verify(
-            img1_path=base_path,
-            img2_path=tmp_path,
-            model_name=FACE_MODEL,
-            detector_backend=DETECTOR_BACKEND,
-            distance_metric=DISTANCE_METRIC,
-            enforce_detection=True,
-            align=True,
-            anti_spoofing=ANTI_SPOOFING
-        )
+        print(f"Iniciando verificación facial con rotaciones para cédula: {cedula}")
+
+        # NUEVA FUNCIONALIDAD: Probar múltiples rotaciones
+        result = try_face_verification_with_rotations(base_path, tmp_path)
+        
+        print(f"Verificación completada:")
+        print(f"- Verificado: {result.get('verified', False)}")
+        print(f"- Distancia: {result.get('distance', 1.0):.4f}")
+        print(f"- Rotación aplicada: {result.get('rotation_angle', 0)}°")
+        print(f"- Intentos totales: {result.get('total_attempts', 0)}")
+
+        # Solo lanzar error si NO hay success en ninguna rotación Y verified es False
+        if not result.get("success", False) and not result.get("verified", False):
+            error_message = result.get("error", "Error en todas las rotaciones de verificación facial")
+            print(f"Todas las rotaciones fallaron: {error_message}")
+            # No lanzar HTTPException aquí, dejar que continúe y se registre el intento
 
         # Obtener empresa del usuario
         empresa = "principal"  # Valor por defecto
@@ -271,18 +417,24 @@ async def verify_web_face(
         timestamp = datetime.utcnow().isoformat()
         record_id = str(uuid.uuid4())
         
+        # Comentario con información de rotación
+        comentario_final = comentario if comentario else ""
+        if result.get('rotation_angle', 0) != 0:
+            rotation_info = f"Rotación aplicada: {result.get('rotation_angle', 0)}°"
+            comentario_final = f"{comentario_final} {rotation_info}".strip()
+        
         record_data = {
             "id": record_id,
             "cedula": cedula,
             "timestamp": timestamp,
             "tipo_registro": tipo_registro,
-            "verificado": result["verified"],
-            "distancia": result["distance"],
+            "verificado": result.get("verified", False),
+            "distancia": result.get("distance", 1.0),
             "terminal_id": None,
             "web": True,
             "empresa": empresa,
             "fuera_de_ubicacion": fuera_de_ubicacion,
-            "comentario": comentario if comentario else "",
+            "comentario": comentario_final,
             "ubicacion_nombre": ubicacion_nombre
         }
         
@@ -292,14 +444,19 @@ async def verify_web_face(
         # Preparar respuesta
         response = {
             "record_id": record_id,
-            "verified": result["verified"],
-            "distance": result["distance"],
+            "verified": result.get("verified", False),
+            "distance": result.get("distance", 1.0),
             "cedula": cedula,
             "tipo_registro": tipo_registro,
             "timestamp": timestamp,
             "fuera_de_ubicacion": fuera_de_ubicacion,
-            "comentario": comentario,
-            "ubicacion_nombre": ubicacion_nombre
+            "comentario": comentario_final,
+            "ubicacion_nombre": ubicacion_nombre,
+            # Información adicional sobre rotación para debugging
+            "rotation_info": {
+                "angle_applied": result.get("rotation_angle", 0),
+                "total_attempts": result.get("total_attempts", 1)
+            }
         }
         
         # Limpiar archivo temporal antes de devolver respuesta
@@ -312,14 +469,60 @@ async def verify_web_face(
         
         return response
         
+    except HTTPException:
+        # Re-lanzar HTTPException específicas (como validación de token)
+        raise
+        
     except Exception as e:
         # Asegurarse de limpiar el archivo temporal en caso de error
         if tmp_path and os.path.exists(tmp_path):
             try:
-                #os.remove(tmp_path)
+                os.remove(tmp_path)
                 print(f"Archivo temporal eliminado después de error: {tmp_path}")
             except Exception as clean_error:
                 print(f"No se pudo eliminar el archivo temporal: {str(clean_error)}")
         
-        # Re-lanzar la excepción
-        raise HTTPException(status_code=500, detail=f"Error en DeepFace: {str(e)}")
+        # En lugar de HTTPException, devolver un resultado negativo
+        print(f"Error general en verificación: {str(e)}")
+        
+        # Crear respuesta de error pero válida
+        timestamp = datetime.utcnow().isoformat()
+        record_id = str(uuid.uuid4())
+        
+        error_record = {
+            "id": record_id,
+            "cedula": cedula,
+            "timestamp": timestamp,
+            "tipo_registro": "entrada",  # valor por defecto
+            "verificado": False,
+            "distancia": 1.0,
+            "terminal_id": None,
+            "web": True,
+            "empresa": "principal",
+            "fuera_de_ubicacion": fuera_de_ubicacion,
+            "comentario": f"Error en verificación: {str(e)}",
+            "ubicacion_nombre": "Error"
+        }
+        
+        # Intentar guardar el registro de error
+        try:
+            save_record(error_record)
+        except Exception:
+            pass  # Si no se puede guardar, continuar
+        
+        return {
+            "record_id": record_id,
+            "verified": False,
+            "distance": 1.0,
+            "cedula": cedula,
+            "tipo_registro": "entrada",
+            "timestamp": timestamp,
+            "fuera_de_ubicacion": fuera_de_ubicacion,
+            "comentario": f"Error en verificación: {str(e)}",
+            "ubicacion_nombre": "Error",
+            "rotation_info": {
+                "angle_applied": 0,
+                "total_attempts": 0,
+                "error": str(e)
+            }
+        }

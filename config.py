@@ -17,10 +17,10 @@ API_KEYS: Dict[str, str] = {
 # Rutas de archivos
 BASE_IMAGE_PATH = "imagenes_base"
 TMP_UPLOAD_PATH = "tmp_uploads"
-USERS_FILE = "usuarios.json"
-TERMINAL_REQUESTS_FILE = "solicitudes_registro.json"
-UBICACIONES_FILE = "ubicaciones.json"
-RECORDS_FILE = "registros.json"
+USERS_FILE = "data/usuarios.json"
+TERMINAL_REQUESTS_FILE = "data/solicitudes_registro.json"
+UBICACIONES_FILE = "data/ubicaciones.json"
+RECORDS_FILE = "data/registros.json"
 
 # Configuración de DeepFace
 FACE_MODEL = "SFace"  # Modelo a usar

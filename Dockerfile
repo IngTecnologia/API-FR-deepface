@@ -38,7 +38,7 @@ RUN pip install --no-cache-dir --upgrade pip setuptools wheel
 COPY requirements.txt .
 
 # Instalar dependencias de Python desde requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir --resume-retries=10 -r requirements.txt 
 
 # Crear directorios necesarios
 RUN mkdir -p imagenes_base tmp_uploads
