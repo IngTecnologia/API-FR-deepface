@@ -44,6 +44,42 @@ def save_record(record_data):
     
     return record_data
 
+# Obtener el último registro de un usuario
+def get_last_record(cedula: str) -> Optional[dict]:
+    """Obtiene el último registro de un usuario específico."""
+    if not os.path.exists(RECORDS_FILE):
+        return None
+    
+    with open(RECORDS_FILE, "r") as f:
+        all_records = json.load(f)
+    
+    # Filtrar por cédula del usuario
+    user_records = [r for r in all_records if r["cedula"] == cedula]
+    
+    if not user_records:
+        return None
+    
+    # Ordenar por timestamp (más reciente primero)
+    user_records.sort(key=lambda x: x["timestamp"], reverse=True)
+    
+    return user_records[0]
+
+# Detectar automáticamente el tipo de registro (entrada/salida)
+def detect_automatic_record_type(cedula: str) -> str:
+    """Detecta automáticamente si debe ser entrada o salida basado en el último registro."""
+    last_record = get_last_record(cedula)
+    
+    if not last_record:
+        # Si no hay registros previos, es entrada
+        return "entrada"
+    
+    # Si el último registro fue entrada, el próximo debe ser salida
+    if last_record["tipo_registro"] == "entrada":
+        return "salida"
+    else:
+        # Si el último registro fue salida, el próximo debe ser entrada
+        return "entrada"
+
 # Endpoint para obtener registros por empresa
 @router.get("/records/company/{empresa}")
 async def get_records_by_company(empresa: str):
