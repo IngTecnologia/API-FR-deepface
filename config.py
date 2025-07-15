@@ -10,7 +10,7 @@ DEFAULT_EMPRESA = "principal"  # Empresa por defecto
 
 # Configuración de API keys para terminales
 API_KEYS: Dict[str, str] = {
-    "TERMINAL_001": os.environ.get("API_KEY_001", "mi_api_key_segura_001"),
+    "TERMINAL_001": "terminal_key_001",
     "TERMINAL_002": os.environ.get("API_KEY_002", "otra_clave_segura_002")
 }
 
