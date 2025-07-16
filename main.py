@@ -5,6 +5,9 @@ from verify_web import router as web_router
 from user_registration import router as registration_router
 from attendance_records import router as records_router
 from terminal_sync import router as sync_router
+from terminal_health import router as terminal_health_router
+from terminal_records import router as terminal_records_router
+from terminal_users import router as terminal_users_router
 
 app = FastAPI(title="DeepFace API", 
               description="API para verificación facial y control de acceso",
@@ -25,6 +28,10 @@ app.include_router(web_router, tags=["Web Verification"])
 app.include_router(registration_router, tags=["User Registration"])
 app.include_router(records_router, tags=["Attendance Records"])
 app.include_router(sync_router, tags=["Terminal Synchronization"])
+# Nuevos routers para terminal firmware
+app.include_router(terminal_health_router, tags=["Terminal Health"])
+app.include_router(terminal_records_router, tags=["Terminal Records"])
+app.include_router(terminal_users_router, tags=["Terminal Users"])
 
 @app.get("/")
 def read_root():
