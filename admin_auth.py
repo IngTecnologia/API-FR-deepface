@@ -146,22 +146,10 @@ def update_last_access(email: str):
 @router.post("/admin/auth/login", response_model=LoginResponse)
 async def admin_login(credentials: AdminLogin):
     """Login de administrador"""
-    print(f"[DEBUG] Admin login attempt: email={credentials.email}")
-    
     init_admin_users()  # Asegurar que existen usuarios admin
-    print("[DEBUG] Admin users initialized")
     
     user_data = get_admin_user(credentials.email)
-    print(f"[DEBUG] User data found: {user_data is not None}")
-    
-    if user_data:
-        print(f"[DEBUG] User active: {user_data.get('activo')}")
-        password_valid = verify_password(credentials.password, user_data["password_hash"])
-        print(f"[DEBUG] Password valid: {password_valid}")
-        print(f"[DEBUG] Hash from DB: {user_data['password_hash'][:20]}...")
-    
     if not user_data or not verify_password(credentials.password, user_data["password_hash"]):
-        print("[DEBUG] Authentication failed")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Credenciales incorrectas"
