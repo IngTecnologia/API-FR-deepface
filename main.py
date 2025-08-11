@@ -8,6 +8,7 @@ from terminal_sync import router as sync_router
 from terminal_health import router as terminal_health_router
 from terminal_records import router as terminal_records_router
 from terminal_users import router as terminal_users_router
+from admin_auth import router as admin_auth_router
 
 app = FastAPI(title="DeepFace API", 
               description="API para verificación facial y control de acceso",
@@ -32,6 +33,7 @@ app.include_router(sync_router, tags=["Terminal Synchronization"])
 app.include_router(terminal_health_router, tags=["Terminal Health"])
 app.include_router(terminal_records_router, tags=["Terminal Records"])
 app.include_router(terminal_users_router, tags=["Terminal Users"])
+app.include_router(admin_auth_router, tags=["Admin Authentication"])
 
 @app.get("/")
 def read_root():
