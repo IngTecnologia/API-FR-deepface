@@ -63,7 +63,7 @@ def init_admin_users():
             "fecha_creacion": datetime.utcnow().isoformat(),
             "ultimo_acceso": None,
             # Password: admin123 (hasheado con bcrypt)
-            "password_hash": "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBdXzgVaj8l4L2"
+            "password_hash": "$2b$12$AnMT8Wwq.lp4uaKGiNhknO95xUo2Kk37zOmpMQhkCAJsMuH0IIxvG"
         }
         
         with open(ADMIN_USERS_FILE, "w") as f:
